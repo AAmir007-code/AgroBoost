@@ -1,0 +1,5 @@
+.idea
+.DS_Store
+vision/images/*
+vision/videos/*
+vision/dataset

@@ -1,0 +1,117 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: django_app
+    command: gunicorn project_name.wsgi:application --bind 0.0.0.0:8000 --workers=3
+    volumes:
+      - ./backend:/app  # Use volumes only in development for live updates
+    ports:
+      - "8000:8000"
+    expose:
+      - "8000"
+    environment:
+      - DJANGO_DEBUG=False  # Set environment variables
+      - DATABASE_URL=postgres://user:password@db:5432/dbname
+    healthcheck:
+      test: [ "CMD", "curl", "--fail", "http://localhost:8000/health/" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - db
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+      replicas: 3  # Scaling backend to 3 instances in production mode
+
+  fastapi-app:
+    image: fastapi-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - MINIO_URL=http://minio:9000
+      - MINIO_BUCKET=images
+      - MINIO_ACCESS_KEY=your_access_key
+      - MINIO_SECRET_KEY=your_secret_key
+      - BACKEND_URL=http://your-backend-url/api/results
+    deploy:
+      replicas: 3  # Scale to 3 replicas
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "512M"
+
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+    environment:
+      - MINIO_ACCESS_KEY=your_access_key
+      - MINIO_SECRET_KEY=your_secret_key
+    command: server /data
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: vue_app
+    command: npm run serve
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./frontend:/app  # Only use volumes for development
+    healthcheck:
+      test: [ "CMD", "curl", "--fail", "http://localhost:8080" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - backend
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+
+  db:
+    image: postgres:13-alpine  # Smaller image for PostgreSQL
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: dbname
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: always
+
+  redis:
+    image: redis:6-alpine
+    container_name: redis_cache
+    ports:
+      - "6379:6379"
+    restart: always
+
+volumes:
+  postgres_data: {}
+
+networks:
+  default:
+    driver: bridge
