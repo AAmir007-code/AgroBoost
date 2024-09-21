@@ -1,7 +1,7 @@
 # AgroBoost
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Build Status](https://img.shields.io/travis/your_username/AgroBoost.svg)](https://travis-ci.com/your_username/AgroBoost)
+[![Build Status](https://img.shields.io/travis/AAmir007-code/AgroBoost.svg)](https://travis-ci.com/your_username/AgroBoost)
 [![Documentation Status](https://readthedocs.org/projects/agroboost/badge/?version=latest)](https://agroboost.readthedocs.io/en/latest/?badge=latest)
 
 AgroBoost is an innovative solution designed to enhance agricultural productivity through advanced analytics and
